@@ -1,0 +1,32 @@
+[package]
+name = "marigold"
+version = "1.0.0"
+edition = "2021"
+
+# Merchant C — Marigold Bazaar. Teesra stack, aur pehla COMPILED wala.
+#
+# Chaar runtime dependencies, aur har ek ki apni wajah hai:
+#   tiny_http   ek blocking HTTP server. Koi framework, koi router, koi async runtime
+#               nahi — 6 endpoints ke liye `match` kaafi hai
+#   rusqlite    SQLite, `bundled` feature ke saath: C source khud compile hota hai, to
+#               is machine par SQLite install hona zaroori nahi
+#   ureq        blocking HTTPS client. `native-tls` yaani Windows ka apna SChannel —
+#               rustls ka poora icu/webpki ka ped nahi chahiye
+#   serde_json  JSON. Iska `Map` sorted hai, jisse idempotency ka body canonical ban
+#               jata hai bina kuch likhe
+#
+# Jaan-boojhkar jo NAHI hai: koi web framework, koi ORM, koi template engine, koi date
+# library, koi base64 crate. Time formatting aur base64 dono `util.rs` me haath se hain,
+# ~50 line, aur unka apna self-check hai. Northwind (Pydantic + Jinja2) aur Voltline
+# (template literals) se ek line saanjhi nahi hai — aur wahi is merchant ka poora point
+# hai.
+[dependencies]
+tiny_http = "0.12"
+rusqlite = { version = "0.32", features = ["bundled"] }
+ureq = { version = "2", default-features = false, features = ["native-tls", "json"] }
+native-tls = "0.2"
+serde_json = "1"
+
+[profile.release]
+opt-level = 1
+debug = false
