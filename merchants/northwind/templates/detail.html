@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+{#
+  Product detail. Yahi row `/agent/products/{id}` bhi lauta ta hai — aur wo endpoint kabhi
+  cache se nahi aata, kyunki uska price aur stock wahi values hain jinpe paisa verify hota
+  hai. Is page ka kaam split screen me ek hi baat sabit karna hai: dono taraf ek hi row.
+#}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ p.title }} &mdash; {{ store }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-stone-50 text-stone-900 antialiased">
+  <header class="border-b border-stone-200 bg-white">
+    <div class="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between gap-4">
+      <a href="/" class="text-xl font-semibold tracking-tight">Northwind
+        <span class="text-stone-400 font-normal">Apparel</span></a>
+      <a href="/?category={{ p.category }}"
+         class="text-xs text-stone-500 hover:text-stone-900">&larr; all {{ p.category|replace('-', ' ') }}</a>
+    </div>
+  </header>
+
+  {% set live = variants | selectattr('stock', 'gt', 0) | list %}
+  {% set from_paise = (live | map(attribute='price_paise') | min) if live
+                      else (variants | map(attribute='price_paise') | min) %}
+  {% set mrp = variants | map(attribute='mrp_paise') | select | max %}
+
+  <main class="mx-auto max-w-6xl px-6 py-8 grid gap-10 lg:grid-cols-2">
+    <div>
+      <div class="aspect-square rounded-xl border border-stone-200 bg-white overflow-hidden">
+        {% if images %}<img src="{{ images[0] }}" alt="{{ p.title }}"
+                            class="h-full w-full object-contain mix-blend-multiply">{% endif %}
+      </div>
+      {% if images|length > 1 %}
+      <div class="mt-3 grid grid-cols-4 gap-3">
+        {% for img in images[1:5] %}
+        <div class="aspect-square rounded-lg border border-stone-200 bg-white overflow-hidden">
+          <img src="{{ img }}" alt="" loading="lazy"
+               class="h-full w-full object-contain mix-blend-multiply">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div>
+      <p class="text-[11px] uppercase tracking-wide text-stone-400">
+        {{ p.category|replace('-', ' ') }}{% if p.brand %} &middot; {{ p.brand }}{% endif %}</p>
+      <h1 class="mt-1 text-3xl font-semibold leading-tight">{{ p.title }}</h1>
+      {% if p.rating_avg %}
+      <p class="mt-1.5 text-sm text-amber-600">&#9733; {{ '%.1f'|format(p.rating_avg) }}
+        <span class="text-stone-400">({{ p.rating_count }} reviews)</span></p>
+      {% endif %}
+
+      <div class="mt-5 flex items-baseline gap-3">
+        <span class="text-3xl font-semibold">&#8377;{{ '{:,}'.format(from_paise // 100) }}</span>
+        {% if mrp and mrp > from_paise %}
+        <span class="text-stone-400 line-through">&#8377;{{ '{:,}'.format(mrp // 100) }}</span>
+        <span class="rounded bg-emerald-50 text-emerald-700 border border-emerald-200
+                     px-2 py-0.5 text-xs font-medium">
+          {{ ((mrp - from_paise) * 100 // mrp) }}% off</span>
+        {% endif %}
+        {% if not live %}
+        <span class="rounded bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5
+                     text-xs font-medium">Sold out</span>
+        {% endif %}
+      </div>
+
+      {# Description VERBATIM (SPEC 10). Merchant sanitize nahi karta — safai Layer ka
+         kaam hai, ek jagah, warna Layer ye bata hi nahi paati ki use asal me kya mila. #}
+      <p class="mt-5 whitespace-pre-line text-sm leading-relaxed text-stone-700">{{ p.description }}</p>
+
+      {% if tags %}
+      <div class="mt-4 flex flex-wrap gap-1.5">
+        {% for t in tags %}<span class="rounded-full bg-stone-100 border border-stone-200
+          px-2.5 py-0.5 text-[11px] text-stone-500">{{ t }}</span>{% endfor %}
+      </div>
+      {% endif %}
+
+      <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-stone-500">
+        Options
+        {% if variants|length > 1 %}<span class="ml-1 font-normal normal-case text-stone-400">
+          &mdash; one has to be chosen</span>{% endif %}
+      </h2>
+      <div class="mt-2 grid gap-2 sm:grid-cols-2">
+        {% for v in variants %}
+        {% set opts = v.options|from_json %}
+        <div class="rounded-lg border px-3 py-2 {{ 'border-stone-200 bg-white' if v.stock > 0 else 'border-stone-200 bg-stone-50 opacity-60' }}">
+          <p class="text-sm font-medium">{{ opts.values()|join(' &middot; ')|safe if opts else 'Standard' }}</p>
+          <p class="text-xs text-stone-500">&#8377;{{ '{:,}'.format(v.price_paise // 100) }}
+            &middot; {{ (v.stock ~ ' in stock') if v.stock > 0 else 'sold out' }}</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if attributes %}
+      <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-stone-500">Details</h2>
+      <dl class="mt-2 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+        {% for k, v in attributes.items() %}
+        <dt class="text-stone-500">{{ k.replace('_', ' ')|title }}</dt><dd>{{ v }}</dd>
+        {% endfor %}
+      </dl>
+      {% endif %}
+
+      {% if reviews %}
+      <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-stone-500">Reviews</h2>
+      <ul class="mt-2 space-y-2.5">
+        {% for r in reviews %}
+        <li class="rounded-lg border border-stone-200 bg-white p-3 text-sm">
+          <p class="font-medium">{{ r.author }}
+            <span class="text-amber-600 font-normal">&#9733; {{ r.rating }}</span></p>
+          <p class="mt-1 text-stone-600 whitespace-pre-line">{{ r.body }}</p>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      <div class="mt-8 rounded-xl border border-dashed border-stone-300 bg-white p-4 text-xs
+                  text-stone-500 leading-relaxed">
+        Delivery is quoted per pincode at checkout: &#8377;{{ policies.shipping // 100 }} flat,
+        free above &#8377;{{ '{:,}'.format(policies.free_above // 100) }}, cancel within
+        {{ policies.cancel_hours }} hours, at most {{ policies.max_qty }} of one option per order.
+        <strong class="text-stone-700">Northwind does not deliver to the North East</strong> &mdash;
+        Marigold Bazaar does, and an AI buyer moves on by itself when a shop says no.
+      </div>
+
+      <p class="mt-4 text-xs text-stone-400">
+        <code class="text-stone-500">{{ p.product_id }}</code> &middot; updated {{ p.updated_at }} &middot;
+        <a class="underline" href="/agent/products/{{ p.product_id }}">the same row via /agent/*</a>
+      </p>
+    </div>
+  </main>
+</body>
+</html>

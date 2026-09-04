@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+{#
+  Northwind ka shop front. Yahi database `/agent/catalog` ko bhi serve karta hai — aur
+  wahi is page ka poora point hai. Demo split screen me chalta hai: ek taraf ye page, ek
+  taraf agent ke tool calls. Dono ka data ek hi jagah se aata hai, isliye "AI ko dikhaya
+  gaya daam" aur "insaan ko dikhaya gaya daam" alag ho hi nahi sakte.
+#}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ store }}{% if active %} &middot; {{ active|replace('-', ' ') }}{% endif %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  </style>
+</head>
+<body class="bg-stone-50 text-stone-900 antialiased">
+  <header class="border-b border-stone-200 bg-white">
+    <div class="mx-auto max-w-6xl px-6 pt-6 pb-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <a href="/" class="text-2xl font-semibold tracking-tight">Northwind
+        <span class="text-stone-400 font-normal">Apparel</span></a>
+      <form class="flex-1 min-w-[220px] max-w-md" action="/">
+        {% if active %}<input type="hidden" name="category" value="{{ active }}">{% endif %}
+        <input name="q" value="{{ q }}" placeholder="Search shirts, shoes, watches&hellip;"
+               class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-stone-400">
+      </form>
+      <a href="/docs" class="text-xs text-stone-500 underline underline-offset-2">live API contract</a>
+    </div>
+
+    {# Policies wahi hain jo manifest agent ko batata hai. Insaan aur agent ek hi dukaan
+       ke saamne khade hain, isliye dono ko wahi shartein dikhni chahiye. #}
+    <div class="mx-auto max-w-6xl px-6 pb-3 flex flex-wrap gap-2 text-[12px]">
+      <span class="rounded-full bg-stone-100 border border-stone-200 px-3 py-1">
+        Shipping &#8377;{{ policies.shipping // 100 }} &middot; free above &#8377;{{ '{:,}'.format(policies.free_above // 100) }}</span>
+      <span class="rounded-full bg-stone-100 border border-stone-200 px-3 py-1">
+        Cancel within {{ policies.cancel_hours }}h</span>
+      <span class="rounded-full bg-stone-100 border border-stone-200 px-3 py-1">
+        Max {{ policies.max_qty }} per item, per order</span>
+      <span class="rounded-full bg-amber-50 border border-amber-200 text-amber-800 px-3 py-1">
+        Not delivering to the North East</span>
+    </div>
+
+    <div class="mx-auto max-w-6xl px-6 pb-4 flex flex-wrap gap-1.5">
+      <a href="/{% if q %}?q={{ q }}{% endif %}"
+         class="rounded-full border px-3 py-1 text-[13px] {{ 'bg-stone-900 border-stone-900 text-white' if not active else 'bg-white border-stone-200 text-stone-500 hover:border-stone-400' }}">All</a>
+      {% for c in categories %}
+      <a href="/?category={{ c }}{% if q %}&q={{ q }}{% endif %}"
+         class="rounded-full border px-3 py-1 text-[13px] {{ 'bg-stone-900 border-stone-900 text-white' if active == c else 'bg-white border-stone-200 text-stone-500 hover:border-stone-400' }}">{{ c|replace('-', ' ') }}</a>
+      {% endfor %}
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-6 py-8">
+    {% if not products %}
+      <p class="text-sm text-stone-500">Nothing matched. <a class="underline" href="/">Show everything</a>.</p>
+    {% endif %}
+    <div class="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+      {% for p in products %}
+      {% set imgs = p.images|from_json %}
+      <a href="/p/{{ p.product_id }}"
+         class="group flex flex-col rounded-xl border border-stone-200 bg-white overflow-hidden
+                hover:shadow-lg hover:-translate-y-0.5 transition">
+        <div class="aspect-square bg-stone-100 overflow-hidden relative">
+          {% if imgs %}
+          <img src="{{ imgs[0] }}" alt="{{ p.title }}" loading="lazy"
+               class="h-full w-full object-contain mix-blend-multiply group-hover:scale-105 transition">
+          {% endif %}
+          {% if p.maxstock == 0 %}
+          <span class="absolute inset-x-0 bottom-0 bg-rose-600 text-white text-[11px]
+                       text-center py-1 tracking-wide">SOLD OUT</span>
+          {% endif %}
+        </div>
+        <div class="p-3 flex flex-col gap-1 flex-1">
+          <p class="text-[11px] uppercase tracking-wide text-stone-400">{{ p.category|replace('-', ' ') }}</p>
+          <h2 class="text-sm font-medium leading-snug line-clamp-2">{{ p.title }}</h2>
+          {% if p.rating_avg %}
+          <p class="text-[11px] text-amber-600">&#9733; {{ '%.1f'|format(p.rating_avg) }}
+            <span class="text-stone-400">({{ p.rating_count or 0 }})</span></p>
+          {% endif %}
+          <p class="mt-auto pt-1 text-[15px] font-semibold">
+            &#8377;{{ '{:,}'.format(p.pmin // 100) }}{% if p.pmax != p.pmin %}<span
+              class="font-normal text-stone-400 text-sm"> &ndash; &#8377;{{ '{:,}'.format(p.pmax // 100) }}</span>{% endif %}
+          </p>
+          <p class="text-[11px] text-stone-400">
+            {{ p.vcount }} option{{ '' if p.vcount == 1 else 's' }}
+            {% if p.vcount > 1 %}&middot; <span class="text-stone-500">pick a size</span>{% endif %}
+          </p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </main>
+
+  <footer class="mx-auto max-w-6xl px-6 pb-12 text-xs text-stone-400 leading-relaxed">
+    {{ products|length }} products on this shelf. This page and
+    <code class="text-stone-500">/agent/catalog</code> read the same database &mdash;
+    the shopper and the AI buyer are looking at one shop, not two.
+    <a class="underline" href="/docs">API contract</a>
+  </footer>
+</body>
+</html>
