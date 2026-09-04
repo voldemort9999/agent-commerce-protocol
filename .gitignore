@@ -1,0 +1,45 @@
+.env
+*.db
+*.db-shm
+*.db-wal
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+layer/*.db
+.claude/settings.local.json
+merchants/northwind/server.log*
+merchants/voltline/server.log*
+
+# Merchant C (Rust) — build output aur uska DB
+merchants/marigold/target/
+merchants/marigold/*.db
+merchants/marigold/*.db-wal
+merchants/marigold/*.db-shm
+merchants/marigold/server.log*
+
+# `scripts/export_static.py` ka output — generated hai, isliye commit nahi hota.
+# Regenerate: .venv/Scripts/python.exe scripts/export_static.py
+deploy/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BUILD-TIME MEMORY — disk par rehti hai, repo me kabhi nahi
+# ─────────────────────────────────────────────────────────────────────────────
+# Ye files is project ka CONTEXT hain, uska deliverable nahi. Inka reader ek AI
+# session hai, judge ya merchant developer nahi: session log, decision log,
+# video ke notes, aur wo hidayatein jo batati hain ye documents kaise maintain
+# hote hain. Repo me inka koi reader hi nahi hai.
+#
+# Jo cheez inme se BAHAR wale ke kaam ki thi wo repo me ja chuki hai —
+# `docs/WHAT_BROKE.md` (§9 ka distilled roop) aur `docs/ARCHITECTURE.md` §16.
+CLAUDE.md
+docs/INSTRUCTIONS_FOR_AI.md
+docs/UPDATED_SITUATION.md
+docs/POINTS_FOR_VIDEO.md
+
+# 4,238 line ka raw terminal dump. Secrets scan saaf hai, par ye shor hai.
+Build001.txt
+
+# Bahar wale testers ke brief — hamare apne testing ke liye banaye the.
+demo/prompts/
