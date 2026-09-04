@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "agent-commerce-layer": {
+      "command": ".venv/Scripts/python.exe",
+      "args": ["layer/server.py"]
+    }
+  }
+}
