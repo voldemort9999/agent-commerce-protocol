@@ -1,0 +1,29 @@
+[
+  {
+    "merchant_id": "northwind-apparel",
+    "base_url": "http://127.0.0.1:8001",
+    "key_env": "NORTHWIND_AGENT_KEY",
+    "conformance": {
+      "pincode": "440001",
+      "dead_pincode": "781001"
+    }
+  },
+  {
+    "merchant_id": "voltline-electronics",
+    "base_url": "http://127.0.0.1:8002",
+    "key_env": "VOLTLINE_AGENT_KEY",
+    "conformance": {
+      "pincode": "440001",
+      "dead_pincode": "781001"
+    }
+  },
+  {
+    "merchant_id": "marigold-bazaar",
+    "base_url": "http://127.0.0.1:8003",
+    "key_env": "MARIGOLD_AGENT_KEY",
+    "conformance": {
+      "pincode": "302001",
+      "dead_pincode": "682001"
+    }
+  }
+]
