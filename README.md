@@ -3,6 +3,12 @@
 **A specification that makes any merchant transactable by any AI buyer, and a layer that
 speaks it.**
 
+![tests](https://img.shields.io/badge/tests-246-3d6b4a?style=flat-square)
+![merchants](https://img.shields.io/badge/merchants-3%20languages-3d6b4a?style=flat-square)
+![MCP tools](https://img.shields.io/badge/MCP%20tools-13-3d6b4a?style=flat-square)
+![spec](https://img.shields.io/badge/SPEC-v1.9-3d6b4a?style=flat-square)
+![payments](https://img.shields.io/badge/Razorpay-test%20mode-3d6b4a?style=flat-square)
+
 Built for the Razorpay AI Buildathon, Track 01: *"an agent that makes a merchant
 transactable by an AI buyer end to end."*
 
@@ -93,6 +99,40 @@ human was asked. A consulted human and a skipped one produce byte-identical call
 the tool text says so. The per-order cap also does not bound a *sequence* of legal orders.
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §7.4 states that gap plainly rather than
 letting a reviewer find it.
+
+Here is the same thing as a sequence. The two `refuses if` notes are the gates, and the
+policy decision sits after the merchant has returned the real total, never before:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as Person
+    participant A as AI buyer
+    participant L as Layer
+    participant M as Merchant
+    participant R as Razorpay
+
+    A->>L: search_products
+    L-->>A: results from the index, may be minutes stale
+    A->>L: get_product
+    L->>M: live read
+    M-->>L: price, stock, variants, one photo sheet
+    L-->>A: the only price that may be quoted
+    A->>P: show the variants and ask
+    P-->>A: picks one
+    A->>L: add_to_cart
+    A->>L: create_order with instrument and confirm_items
+    Note over L: refuses if the echo does not match the cart
+    L->>M: create the order UNPAID
+    M-->>L: real total, shipping and discount included
+    Note over L: cap decided here, on the real total
+    A->>L: pay_order with confirm_total_paise
+    Note over L: refuses if the echo does not match the record
+    L->>R: settle, below the ceiling only
+    L->>M: is this order paid?
+    M-->>L: paid
+    L-->>A: paid, and every step above is in the audit log
+```
 
 ---
 
