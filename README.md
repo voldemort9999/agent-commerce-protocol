@@ -184,7 +184,8 @@ written in three different languages, which is the point rather than an accident
 ### From a clean clone
 
 ```bash
-git clone <this repo> && cd agent-commerce-protocol
+git clone https://github.com/voldemort9999/agent-commerce-protocol.git
+cd agent-commerce-protocol
 
 python -m venv .venv
 .venv/Scripts/python.exe -m pip install -r requirements.txt     # Windows
@@ -249,7 +250,7 @@ There are six variables, and `.env.example` carries this table with the reasonin
 
 | Variable | What it buys | Without it |
 |---|---|---|
-| `NORTHWIND_AGENT_KEY` | The shared secret Northwind authenticates the Layer with (`SPEC.md` §2.5) | That shop answers `401` to everything, so search and orders skip it |
+| `NORTHWIND_AGENT_KEY` | The shared secret Northwind authenticates the Layer with (`docs/SPEC.md` §2.5) | That shop answers `401` to everything, so search and orders skip it |
 | `VOLTLINE_AGENT_KEY` | The same, for Voltline | Same, for Voltline |
 | `MARIGOLD_AGENT_KEY` | The same, for Marigold | Same, for Marigold |
 | `RAZORPAY_KEY_ID` | Test-mode payment links, checkout orders and refunds | Orders still create. Only the steps where money moves get skipped, by name |
@@ -360,14 +361,14 @@ delta sync), an advancing cursor (a catalog silently indexed half), a payable ch
 instrument, an order expiry that leaked stock, a refund reported as complete while it was
 still pending, a delivery date answered two different ways in one response, one photograph
 claiming to be two different variants, and a phone number that was present, unusable, and
-paid for anyway, which an outside AI buyer found. The changelog in `SPEC.md` §13 names the
+paid for anyway, which an outside AI buyer found. The changelog in `docs/SPEC.md` §13 names the
 failure behind each.
 
 ## Deliberately out of scope
 
 Discovery registries, platform adapters, webhooks, multi-currency, post-delivery returns,
 coupon discovery, and a single cart spanning two merchants. Each has its reason and what
-would change, in `ARCHITECTURE.md` §11. Two shops means two orders, and that is stated to
+would change, in `docs/ARCHITECTURE.md` §11. Two shops means two orders, and that is stated to
 the agent rather than left for it to discover.
 
 ## Status

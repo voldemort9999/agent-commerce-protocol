@@ -1,9 +1,20 @@
-fastapi
-uvicorn[standard]
-jinja2
-razorpay
-python-dotenv
-httpx
-pytest
-mcp
-Pillow
+# The versions this project was measured against on 2026-09-04:
+# 246 tests, no failures, 3 of 3 merchants conformant.
+#
+# `mcp` is pinned exactly and on purpose. Its API has already moved under this code
+# once: FastMCP disappeared, and inputSchema became input_schema. An unpinned install
+# picks up whatever is newest and takes the Layer down at the first tool call, which
+# is the one failure a person evaluating this repo should never have to debug.
+# The rest are pinned for the same reason, one step milder: so a clone months from
+# now installs what the suite was green against.
+
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+jinja2==3.1.6
+pydantic==2.13.4
+razorpay==2.0.1
+python-dotenv==1.2.3
+httpx==0.28.1
+pytest==9.1.1
+mcp==2.0.0
+Pillow==12.3.0
