@@ -8,14 +8,12 @@ transactable by an AI buyer end to end."*
 
 ## Demo video
 
-**▶ [Watch the five-minute demo](https://github.com/voldemort9999/agent-commerce-protocol/releases/download/v1.0/Razorpay_Git.mp4)** — 4:58, recorded against the
-system running locally: a cross-merchant search, a purchase settled below the ceiling
+[![Watch the demo](docs/demo-thumbnail.jpg)](https://youtu.be/GTKDtKJNZfg)
+
+**▶ [Watch the five-minute demo](https://youtu.be/GTKDtKJNZfg)** — 4:58, recorded against
+the system running locally: a cross-merchant search, a purchase settled below the ceiling
 with real Razorpay test-mode money, one refused above it, a planted prompt injection
 stripped and logged, and the audit trail of the order that was just placed.
-
-It is attached to [release v1.0](https://github.com/voldemort9999/agent-commerce-protocol/releases/tag/v1.0)
-rather than committed, so cloning this repository stays cheap — 61 text files, no
-92 MB binary in the history.
 
 ---
 
