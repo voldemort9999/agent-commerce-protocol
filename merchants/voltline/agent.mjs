@@ -326,6 +326,15 @@ export function agentRouter(db) {
         return fail(res, err.status, err.code, err.message, err.details);
       }
       if (err instanceof rzp.ProviderUnreachable) {
+        // Keys hain hi nahi aur provider tak baat na pahunchna DO ALAG cheezein hain.
+        // Pehli permanent hai, doosri transient. Dono ko `429 RATE_LIMITED` kehna ek
+        // judge ko "thodi der baad try karo" bhejta hai jo kabhi kaam nahi karega —
+        // ek asli tester ne isi ko "Razorpay rate limiting" samajh liya tha.
+        if (!rzp.configured()) {
+          return fail(res, 500, 'INTERNAL_ERROR',
+            'This merchant has no Razorpay credentials configured, so it cannot build a payment instrument for this order.',
+            { provider_message: 'RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are not set. Copy .env.example to .env and add Razorpay test-mode keys. Order creation needs them even though no money moves at this step. This will not fix itself on a retry.' });
+        }
         res.set('Retry-After', '5');
         return fail(res, 429, 'RATE_LIMITED',
           'Could not reach the payment provider to build an instrument. Try again shortly.',

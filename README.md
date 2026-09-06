@@ -234,17 +234,57 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8001/agent/manifest   
 Nothing else is platform-specific. The test suites, the conformance runner, the Layer and
 `readiness.py` all run unchanged.
 
-### You do not need a Razorpay account
+### Add Razorpay test keys before you try to buy anything
 
-**Measured, with every Razorpay variable left empty: `55 passed, 3 skipped` of the 58
-conformance tests, per merchant.** The three that skip say so by name. One is structural,
-because all three merchants offer all three payment modes, so "an undeclared payment
-mode" has no case left to test. The other two are the payment-instrument tests, and they
-report `RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET set nahi hain` rather than passing quietly.
+**Please put a Razorpay test-mode key pair in `.env` before running the purchase flow.**
+Without it the shops, the search, the product reads, the carts, the ceilings and the
+sanitizer all work, and you can see most of this project. But **no order can be created
+at all**, so the part this repository is actually about never runs, and what you get
+instead is an error that reads like the code is broken.
 
-Everything else runs without credentials: all three shops, cross-merchant search, live
-product detail, carts, both money ceilings, the prompt-injection sanitizer, the audit log,
-and order creation in `cod` mode. What needs keys is the part where money actually moves.
+That is worth being precise about, because it surprised two people already. An order is
+created **unpaid**, and no money moves at that step. It still needs the keys, because the
+merchant has to build a payment instrument while creating the order. And the Layer refuses
+`cod` for agent orders by design, so there is no third instrument to fall back on:
+
+```
+instrument "auto"  ->  500  this merchant has no Razorpay credentials configured
+instrument "link"  ->  500  the same
+instrument "cod"   ->  refused by the Layer, deliberately (docs/ARCHITECTURE.md §7.6)
+```
+
+Getting the keys takes about two minutes and costs nothing:
+
+1. Sign in at **[dashboard.razorpay.com](https://dashboard.razorpay.com)**
+2. Switch the dashboard to **Test Mode** (the toggle at the top, and please check it,
+   because live keys will not work here and should never be pasted into a demo)
+3. **Settings → API Keys → Generate Test Key**
+4. Copy the key id and the secret into your `.env`:
+
+```bash
+cp .env.example .env          # if you have not already
+# then edit .env:
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+5. Restart the shops, because each one reads its keys at startup:
+   `powershell -ExecutionPolicy Bypass -File scripts\serve.ps1`
+
+The key id always begins with `rzp_test_`. If yours does not, you are on live mode, so go
+back to step 2. Nothing here ever charges a real card: payments run against Razorpay's
+test mode, and every order the demo creates is cancelled and refunded in the same run.
+
+One note from experience, in case you pay a link by hand: the international test card
+`4111 1111 1111 1111` does not work on a fresh test account, because international
+payments are off by default. Netbanking works, and so does UPI `success@razorpay`.
+
+**What still runs with the Razorpay variables empty**, measured, per merchant:
+`55 passed, 3 skipped` of the 58 conformance tests. The three that skip name their own
+reason. One is structural, because all three merchants offer all three payment modes, so
+"an undeclared payment mode" has no case left to test. The other two are the
+payment-instrument tests, and they report the missing variables rather than passing
+quietly. So the specification is fully checkable without an account. The product is not.
 
 There are six variables, and `.env.example` carries this table with the reasoning:
 
@@ -253,8 +293,8 @@ There are six variables, and `.env.example` carries this table with the reasonin
 | `NORTHWIND_AGENT_KEY` | The shared secret Northwind authenticates the Layer with (`docs/SPEC.md` §2.5) | That shop answers `401` to everything, so search and orders skip it |
 | `VOLTLINE_AGENT_KEY` | The same, for Voltline | Same, for Voltline |
 | `MARIGOLD_AGENT_KEY` | The same, for Marigold | Same, for Marigold |
-| `RAZORPAY_KEY_ID` | Test-mode payment links, checkout orders and refunds | Orders still create. Only the steps where money moves get skipped, by name |
-| `RAZORPAY_KEY_SECRET` | The other half of the same credential | Same |
+| `RAZORPAY_KEY_ID` | Every order, plus payment links, checkout orders and refunds | **No order can be created at all.** Both instruments need it, and the Layer will not take `cod` |
+| `RAZORPAY_KEY_SECRET` | The other half of the same credential | The same |
 | `OPENROUTER_API_KEY` | `demo/buyer.py`, a real LLM driving the tool surface | Everything else runs. Only that one script needs it |
 
 The three merchant keys are **not secrets in any real sense**. They are shared between
@@ -294,6 +334,12 @@ id, never the secret.
 
 Claude Code picks the Layer up from the repository's own `.mcp.json`. Check it with
 `claude mcp list`. Claude Desktop reads its own config file and needs absolute paths.
+
+If you would rather drive the tools from your own code than from a chat client, copy
+`scripts/mcp_smoke.py` instead of writing a client from scratch. It opens a real stdio
+session against `layer/server.py` and walks a whole purchase, so it is the shortest
+correct starting point, and it saves guessing at which import names this version of the
+MCP SDK actually has.
 Two outside AI buyers have driven this surface from cold with no access to this
 repository, one running an adversarial audit and one shopping ordinarily. What they
 found, and what was rejected as wrong, is in

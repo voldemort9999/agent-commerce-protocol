@@ -152,6 +152,13 @@ def decode_cursor(cursor: str):
 _rzp = None
 
 
+NO_KEYS_MESSAGE = ("This merchant has no Razorpay credentials configured, so it cannot "
+                   "build a payment instrument for this order.")
+NO_KEYS_DETAIL = ("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are not set. Copy .env.example "
+                  "to .env and add Razorpay test-mode keys. Order creation needs them even "
+                  "though no money moves at this step. This will not fix itself on a retry.")
+
+
 def razorpay_client():
     """Lazy - keys ke bina bhi read endpoints aur UI chalne chahiye."""
     global _rzp
@@ -159,7 +166,11 @@ def razorpay_client():
         import razorpay
         key_id, secret = os.getenv("RAZORPAY_KEY_ID"), os.getenv("RAZORPAY_KEY_SECRET")
         if not key_id or not secret:
-            raise SpecError(500, "INTERNAL_ERROR", "Razorpay keys are not configured.")
+            # Ye transient NAHI hai, isliye 429 galat hota (D-31/D-60 ka wahi farq).
+            # `details` isliye ki bina uske padhne wale ko sirf "INTERNAL_ERROR" dikhta
+            # hai, aur ek AI buyer use "inka code toot gaya" padh leta hai.
+            raise SpecError(500, "INTERNAL_ERROR", NO_KEYS_MESSAGE,
+                            {"provider_message": NO_KEYS_DETAIL})
         _rzp = razorpay.Client(auth=(key_id, secret))
     return _rzp
 

@@ -70,8 +70,13 @@ fn agent() -> ureq::Agent {
 
 fn call(method: &str, route: &str, body: Option<Value>) -> Result<Value, Provider> {
     if !configured() {
+        // Message English me hai aur variables ka naam leta hai: ise ek anjaan
+        // developer padhta hai, aur uske paas poochhne ko koi nahi hota.
         return Err(Provider::Unreachable(
-            "RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET set nahi hain".into(),
+            "RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are not set. Copy .env.example to \
+             .env and add Razorpay test-mode keys. Order creation needs them even though \
+             no money moves at this step. This will not fix itself on a retry."
+                .into(),
         ));
     }
     let auth = format!("Basic {}", base64(format!("{}:{}", key_id(), secret()).as_bytes()));
